@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package br.com.itau.journey.simple;
+package br.com.itau.journey.service;
 
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -23,13 +23,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SayTomorrowDelegate implements JavaDelegate {
+public class SayHelloDelegate implements JavaDelegate {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   @Override
   public void execute(DelegateExecution execution) throws Exception {
-    logger.info("executed sayTomorrowDelegate: {}", execution);
+    logger.info("executed sayHelloDelegate: {}", execution);
+    //throw new BpmnError("FuiNoTororo2");
+    String id = execution.getProcessInstanceId();
+    execution.createIncident("executeInternal", "ProcessVariableDoesNotExist", "Exceção genérica");
+    /*Context.getCommandContext().getTransactionContext().addTransactionListener(TransactionState.COMMITTED, commandContext -> {
+      execution.getProcessEngine().getRuntimeService().suspendProcessInstanceById(id);
+    });*/
+
+    //Thread.sleep(5000);
   }
 
 }

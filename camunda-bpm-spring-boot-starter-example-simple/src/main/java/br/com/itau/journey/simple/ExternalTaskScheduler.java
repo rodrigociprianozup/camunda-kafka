@@ -2,6 +2,7 @@ package br.com.itau.journey.simple;
 
 import br.com.itau.journey.domain.ExternalTaskAccessInfo;
 import br.com.itau.journey.domain.KafkaExternalTask;
+import br.com.itau.journey.service.ProducerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;

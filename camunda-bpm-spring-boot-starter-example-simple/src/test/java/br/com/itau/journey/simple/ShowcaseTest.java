@@ -26,6 +26,7 @@ import static org.camunda.bpm.extension.mockito.DelegateExpressions.autoMock;
 import static org.mockito.Mockito.mock;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import br.com.itau.journey.service.Showcase;
 import org.camunda.bpm.engine.runtime.Job;
 import org.camunda.bpm.spring.boot.starter.event.PostDeployEvent;
 

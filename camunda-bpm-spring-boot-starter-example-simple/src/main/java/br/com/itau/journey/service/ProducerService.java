@@ -1,4 +1,4 @@
-package br.com.itau.journey.simple;
+package br.com.itau.journey.service;
 
 import br.com.itau.journey.domain.KafkaExternalTask;
 import lombok.extern.slf4j.Slf4j;

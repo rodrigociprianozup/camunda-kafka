@@ -18,6 +18,7 @@ package br.com.itau.journey.simple;
 
 import br.com.itau.journey.domain.ExternalTaskAccessInfo;
 import br.com.itau.journey.domain.KafkaExternalTask;
+import br.com.itau.journey.service.Showcase;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +27,7 @@ import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
-import org.camunda.bpm.engine.impl.bpmn.behavior.ExternalTaskActivityBehavior;
+import org.camunda.bpm.engine.impl.bpmn.behavior.NoneEndEventActivityBehavior;
 import org.camunda.bpm.engine.impl.bpmn.parser.AbstractBpmnParseListener;
 import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParseListener;
 import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParser;
@@ -51,11 +52,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +66,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static br.com.itau.journey.simple.Showcase.SAMPLE;
+import static br.com.itau.journey.service.Showcase.SAMPLE;
 import static java.util.Optional.ofNullable;
 
 @Configuration
@@ -106,6 +109,16 @@ public class ApplicationContextConfiguration {
     private HikariDataSource hikariDataSource;
     @Value("${org.camunda.bpm.spring.boot.starter.example.simple.SimpleApplication.exitWhenFinished:false}")
     private boolean exitWhenFinished;
+
+    @Bean
+    public RestTemplate restTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+
+        factory.setConnectTimeout(3000);
+        factory.setReadTimeout(3000);
+
+        return new RestTemplate(factory);
+    }
 
     @Bean
     public ProcessEnginePlugin externalTaskEventPlugin() {
@@ -179,20 +192,32 @@ public class ApplicationContextConfiguration {
 
         public class RegisterExternalTaskBpmnParseListener extends AbstractBpmnParseListener {
 
-
             @Override
-            public void parseServiceTask(Element serviceTaskElement, ScopeImpl scope, ActivityImpl activity) {
-
+            public void parseEndEvent(Element endProcess, ScopeImpl scope, ActivityImpl activity) {
                 ActivityBehavior activityBehavior = activity.getActivityBehavior();
-                if (activityBehavior instanceof ExternalTaskActivityBehavior) {
-                    List<String> kafkaTopics = ofNullable(serviceTaskElement.element(EXTENSION_ELEMENTS))
+                if (activityBehavior instanceof NoneEndEventActivityBehavior) {
+                    List<String> kafkaTopics = ofNullable(endProcess.element(EXTENSION_ELEMENTS))
                             .map(getPropertiesElement())
                             .map(getPropertyList())
                             .map(getFilteredTopicList()).orElse(new ArrayList<>());
 
-                    activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, serviceTaskElement.attributeNS(CAMUNDA_BPMN_EXTENSIONS_NS, TOPIC)));
+                    activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, endProcess.attributeNS(CAMUNDA_BPMN_EXTENSIONS_NS, TOPIC)));
                 }
             }
+
+//            @Override
+//            public void parseServiceTask(Element serviceTaskElement, ScopeImpl scope, ActivityImpl activity) {
+//
+//                ActivityBehavior activityBehavior = activity.getActivityBehavior();
+//                if (activityBehavior instanceof ExternalTaskActivityBehavior) {
+//                    List<String> kafkaTopics = ofNullable(serviceTaskElement.element(EXTENSION_ELEMENTS))
+//                            .map(getPropertiesElement())
+//                            .map(getPropertyList())
+//                            .map(getFilteredTopicList()).orElse(new ArrayList<>());
+//
+//                    activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, serviceTaskElement.attributeNS(CAMUNDA_BPMN_EXTENSIONS_NS, TOPIC)));
+//                }
+//            }
 
             private ExecutionListener getExecutionListener(List<String> kafkaTopics, String camundaTopic) {
                 return execution -> {

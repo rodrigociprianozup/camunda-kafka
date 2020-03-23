@@ -1,4 +1,4 @@
-package br.com.itau.journey.simple;
+package br.com.itau.journey.service;
 
 import org.springframework.stereotype.Service;
 
