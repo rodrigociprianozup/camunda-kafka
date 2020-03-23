@@ -13,13 +13,6 @@ import java.util.HashMap;
 @Service
 public class KSQLInstanceService {
 
-    @Autowired
-    private RestTemplate restTemplate;
-
-    public RestTemplate getRestTemplate() {
-        return restTemplate;
-    }
-
     public ResponseEntity<String> getProcessInstanceId(String instanceId) throws URISyntaxException {
         URI uri = new URI("http://localhost:8088/query");
 
