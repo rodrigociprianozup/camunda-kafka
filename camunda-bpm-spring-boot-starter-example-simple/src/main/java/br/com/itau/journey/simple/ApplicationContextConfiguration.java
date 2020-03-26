@@ -16,9 +16,12 @@
  */
 package br.com.itau.journey.simple;
 
+import br.com.itau.journey.constant.TypeComponent;
 import br.com.itau.journey.domain.ExternalTaskAccessInfo;
 import br.com.itau.journey.domain.KafkaExternalTask;
 import br.com.itau.journey.service.Showcase;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,15 +29,22 @@ import org.camunda.bpm.engine.ExternalTaskService;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
+import org.camunda.bpm.engine.delegate.TaskListener;
+import org.camunda.bpm.engine.form.TaskFormData;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
+import org.camunda.bpm.engine.impl.bpmn.behavior.ExternalTaskActivityBehavior;
 import org.camunda.bpm.engine.impl.bpmn.behavior.NoneEndEventActivityBehavior;
+import org.camunda.bpm.engine.impl.bpmn.behavior.TaskActivityBehavior;
+import org.camunda.bpm.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
 import org.camunda.bpm.engine.impl.bpmn.parser.AbstractBpmnParseListener;
 import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParseListener;
 import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParser;
 import org.camunda.bpm.engine.impl.cfg.AbstractProcessEnginePlugin;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.cfg.ProcessEnginePlugin;
+import org.camunda.bpm.engine.impl.form.handler.TaskFormHandler;
 import org.camunda.bpm.engine.impl.jobexecutor.JobExecutor;
+import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
 import org.camunda.bpm.engine.impl.pvm.delegate.ActivityBehavior;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.impl.pvm.process.ScopeImpl;
@@ -107,6 +117,9 @@ public class ApplicationContextConfiguration {
     //hikariDataSource.close()
     @Autowired
     private HikariDataSource hikariDataSource;
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Value("${org.camunda.bpm.spring.boot.starter.example.simple.SimpleApplication.exitWhenFinished:false}")
     private boolean exitWhenFinished;
 
@@ -176,6 +189,7 @@ public class ApplicationContextConfiguration {
         public final Namespace CAMUNDA_BPMN_EXTENSIONS_NS = new Namespace(BpmnParser.CAMUNDA_BPMN_EXTENSIONS_NS);
         public final String TYPE = "type";
         public final String START_EVENT = "start";
+        public final String CREATE = "create";
 
         private List<BpmnParseListener> customPreBPMNParseListeners(final ProcessEngineConfigurationImpl processEngineConfiguration) {
             if (processEngineConfiguration.getCustomPreBPMNParseListeners() == null) {
@@ -193,6 +207,32 @@ public class ApplicationContextConfiguration {
         public class RegisterExternalTaskBpmnParseListener extends AbstractBpmnParseListener {
 
             @Override
+            public void parseTask(Element endProcess, ScopeImpl scope, ActivityImpl activity) {
+                ActivityBehavior activityBehavior = activity.getActivityBehavior();
+                if (activityBehavior instanceof TaskActivityBehavior) {
+                    List<String> kafkaTopics = ofNullable(endProcess.element(EXTENSION_ELEMENTS))
+                            .map(getPropertiesElement())
+                            .map(getPropertyList())
+                            .map(getFilteredTopicList()).orElse(new ArrayList<>());
+
+                    activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, TypeComponent.SIMPLE_TASK));
+                }
+            }
+
+            @Override
+            public void parseServiceTask(Element endProcess, ScopeImpl scope, ActivityImpl activity) {
+                ActivityBehavior activityBehavior = activity.getActivityBehavior();
+                if (activityBehavior instanceof ExternalTaskActivityBehavior) {
+                    List<String> kafkaTopics = ofNullable(endProcess.element(EXTENSION_ELEMENTS))
+                            .map(getPropertiesElement())
+                            .map(getPropertyList())
+                            .map(getFilteredTopicList()).orElse(new ArrayList<>());
+
+                    activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, TypeComponent.SERVICE_TASK));
+                }
+            }
+
+            @Override
             public void parseEndEvent(Element endProcess, ScopeImpl scope, ActivityImpl activity) {
                 ActivityBehavior activityBehavior = activity.getActivityBehavior();
                 if (activityBehavior instanceof NoneEndEventActivityBehavior) {
@@ -201,49 +241,81 @@ public class ApplicationContextConfiguration {
                             .map(getPropertyList())
                             .map(getFilteredTopicList()).orElse(new ArrayList<>());
 
-                    activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, endProcess.attributeNS(CAMUNDA_BPMN_EXTENSIONS_NS, TOPIC)));
+                    activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, TypeComponent.END_EVENT));
                 }
             }
 
-//            @Override
-//            public void parseServiceTask(Element serviceTaskElement, ScopeImpl scope, ActivityImpl activity) {
-//
-//                ActivityBehavior activityBehavior = activity.getActivityBehavior();
-//                if (activityBehavior instanceof ExternalTaskActivityBehavior) {
-//                    List<String> kafkaTopics = ofNullable(serviceTaskElement.element(EXTENSION_ELEMENTS))
-//                            .map(getPropertiesElement())
-//                            .map(getPropertyList())
-//                            .map(getFilteredTopicList()).orElse(new ArrayList<>());
-//
-//                    activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, serviceTaskElement.attributeNS(CAMUNDA_BPMN_EXTENSIONS_NS, TOPIC)));
-//                }
-//            }
+            @Override
+            public void parseUserTask(Element userTaskElement, ScopeImpl scope, ActivityImpl activity) {
+                ActivityBehavior activityBehavior = activity.getActivityBehavior();
+                if(activityBehavior instanceof UserTaskActivityBehavior ) {
+                    List<String> kafkaTopics = ofNullable(userTaskElement.element(EXTENSION_ELEMENTS))
+                            .map(getPropertiesElement())
+                            .map(getPropertyList())
+                            .map(getFilteredTopicList()).orElse(new ArrayList<>());
 
-            private ExecutionListener getExecutionListener(List<String> kafkaTopics, String camundaTopic) {
+                    UserTaskActivityBehavior userTaskActivityBehavior = (UserTaskActivityBehavior) activityBehavior;
+                    userTaskActivityBehavior
+                            .getTaskDefinition()
+                            .addTaskListener(CREATE, getTaskListener(kafkaTopics, TypeComponent.USER_TASK));
+                }
+            }
+
+            private TaskListener getTaskListener(List<String> kafkaTopics, TypeComponent type) {
                 return execution -> {
                     String processInstanceId = execution.getProcessInstanceId();
-                    String activityInstanceId = execution.getActivityInstanceId();
-                    String currentActivityId = execution.getCurrentActivityId();
-                    logExternalTaskInfo(kafkaTopics, camundaTopic, processInstanceId, activityInstanceId, currentActivityId);
+                    String taskId = execution.getId();
+                    TaskFormHandler taskFormHandler = ((TaskEntity) execution).getTaskDefinition().getTaskFormHandler();
+                    TaskFormData taskForm = taskFormHandler.createTaskForm((TaskEntity) execution);
+                    String info = null;
+                   try {
+                       info = objectMapper.writeValueAsString(taskForm.getFormFields()).replace("\\", "");
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+                    logExternalTaskInfo(kafkaTopics, processInstanceId, taskId, info);
                     ExternalTaskAccessInfo externalTaskAccessInfo = ExternalTaskAccessInfo.builder()
                             .kafkaTopics(kafkaTopics)
                             .kafkaExternalTask(KafkaExternalTask.builder()
-                                    .camundaTopic(camundaTopic)
-                                    .activityInstanceId(activityInstanceId)
-                                    .currentActivityId(currentActivityId)
                                     .processInstanceId(processInstanceId)
+                                    .taskId(taskId)
+                                    .infoUserTask(info)
+                                    .type(type.getEvent())
                                     .build())
                             .build();
                     externalTaskScheduler.scheduler(externalTaskAccessInfo);
                 };
             }
 
-            private void logExternalTaskInfo(List<String> topics, String topic, String processInstanceId, String activityInstanceId, String currentActivityId) {
+            private ExecutionListener getExecutionListener(List<String> kafkaTopics, TypeComponent type) {
+                return execution -> {
+                    String processInstanceId = execution.getProcessInstanceId();
+                    String activityInstanceId = execution.getActivityInstanceId();
+                    String currentActivityId = execution.getCurrentActivityId();
+
+                    logExternalTaskInfo(kafkaTopics, processInstanceId);
+                    ExternalTaskAccessInfo externalTaskAccessInfo = ExternalTaskAccessInfo.builder()
+                            .kafkaTopics(kafkaTopics)
+                            .kafkaExternalTask(KafkaExternalTask.builder()
+                                    .processInstanceId(processInstanceId)
+                                    .activityInstanceId(activityInstanceId)
+                                    .currentActivityId(currentActivityId)
+                                    .type(type.getEvent())
+                                    .build())
+                            .build();
+                    externalTaskScheduler.scheduler(externalTaskAccessInfo);
+                };
+            }
+
+            private void logExternalTaskInfo(List<String> topics, String processInstanceId) {
+                logExternalTaskInfo(topics, processInstanceId, null, null);
+            }
+
+            private void logExternalTaskInfo(List<String> topics, String processInstanceId, String taskId, Object info) {
                 log.info("processInstanceId: {}", processInstanceId);
-                log.info("activityInstanceId: {}", activityInstanceId);
-                log.info("currentActivityId: {}", currentActivityId);
+                log.info("taskId: [{}]", taskId);
                 log.info("kafkaTopcis: [{}]", getKafkaTopicList(topics));
-                log.info("camundaTopic: {}", topic);
+                log.info("info: [{}]", info);
             }
 
             private String getKafkaTopicList(List<String> topics) {

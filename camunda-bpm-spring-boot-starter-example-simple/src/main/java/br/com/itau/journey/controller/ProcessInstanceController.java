@@ -1,84 +1,90 @@
 package br.com.itau.journey.controller;
 
-import br.com.itau.journey.dto.KSQLRequest;
+import br.com.itau.journey.domain.KafkaExternalTasks;
 import br.com.itau.journey.dto.RequestStartDTO;
-import br.com.itau.journey.service.KSQLInstanceService;
+import br.com.itau.journey.rocksdb.RocksDBKeyValueService;
+import br.com.itau.journey.rocksdb.kv.exception.FindFailedException;
+import br.com.itau.journey.rocksdb.mapper.exception.SerDeException;
 import br.com.itau.journey.service.ProcessInstanceService;
 import lombok.RequiredArgsConstructor;
-import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.runtime.ProcessInstance;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
-import sun.net.www.http.HttpClient;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("instance")
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@Slf4j
 public class ProcessInstanceController {
 
     private final ProcessInstanceService processInstanceService;
+    private final RocksDBKeyValueService rocksDBKeyValueService;
 
     @PostMapping("/start")
     @Consumes("application/json")
     @Produces("application/json")
     public ResponseEntity<String> start(@RequestBody RequestStartDTO requestStart) throws InterruptedException, URISyntaxException {
         final String processInstanceId = processInstanceService.startProcessInstance(requestStart.getBpmnInstance());
+        log.info(":: 1 - Created instance with id {}", processInstanceId);
 
-        waitingProcessEnd(processInstanceId);
+        String ksql = "select * from END_PROCESS_STREAM " +
+                " where processInstanceId = '" + processInstanceId + "' " +
+                " and (type = 'UserTask' or type = 'EndEvent') " +
+                " limit 1;";
 
-        return ResponseEntity.ok(processInstanceId);
+        String result = waitingProcessEnd(ksql);
+
+        log.info(":: 2 - Result of Streams {}", result);
+
+        return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/complete")
-    public ResponseEntity<String> start(@RequestBody String taskId) {
+    @PostMapping("/{processInstanceId}/complete/{taskId}")
+    public ResponseEntity<String> complete(@PathVariable String processInstanceId, @PathVariable String taskId) throws URISyntaxException, InterruptedException {
         processInstanceService.completeTask(taskId);
-        return ResponseEntity.ok("Complete!");
+        log.info(":: 1 - Complete task id {}", taskId);
+
+        String ksql = "select * from END_PROCESS_STREAM " +
+                " where processInstanceId = '" + processInstanceId + "' " +
+                " and type = 'EndEvent' " +
+                " limit 1;";
+
+        String result = waitingProcessEnd(ksql);
+
+        log.info(":: 2 - Result of Streams {}", result);
+
+        return ResponseEntity.ok(result);
     }
 
-    private void waitingProcessEnd(String processInstanceId) throws InterruptedException, URISyntaxException {
+    private String waitingProcessEnd(String ksql) throws InterruptedException, URISyntaxException {
         boolean x = true;
+        ResponseEntity<String> result = null;
         while (x) {
-            ResponseEntity<String> result = processInstanceService.getProcessInstanceId(processInstanceId);
-            x = result.getBody() != null && !result.getBody().isEmpty();
+            result = processInstanceService.getProcessInstanceId(ksql);
+            x = result.getBody() == null || result.getBody().isEmpty();
         }
+        return result.getBody();
     }
 
-    @PostMapping("/query")
-    @Consumes("application/json")
-    public String query() throws URISyntaxException {
-        URI uri = new URI("http://localhost:8088/query");
+    @GetMapping("/get/{processInstanceId}")
+    @Produces("application/json")
+    public ResponseEntity<String> get(@PathVariable String processInstanceId) throws URISyntaxException, FindFailedException, SerDeException {
+        Optional<String> byKey = rocksDBKeyValueService.findByKey(processInstanceId);
+        return ResponseEntity.ok(byKey.get());
+    }
 
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.set("Content-Type", "application/json");
-        httpHeaders.add("Accept", MediaType.APPLICATION_JSON.toString());
-
-        System.out.println(uri.getHost());
-
-        HashMap<String, String> prop = new HashMap<>();
-        prop.put("ksql.streams.auto.offset.reset", "earliest");
-
-        String ksql = "select processInstanceId from END_PROCESS_STREAM where processInstanceId = 'f00cbf0f-6d11-11ea-bbab-964a154991e9' LIMIT 1;";
-        KSQLRequest request = new KSQLRequest(ksql, prop);
-
-        HttpEntity httpEntity = new HttpEntity(request, httpHeaders);
-
-        RestTemplate restTemplate = new RestTemplate();
-        System.out.println("json text====" + request.toString());
-
-        ResponseEntity<String> result = restTemplate.postForEntity(uri, httpEntity, String.class);
-
-        return result.getBody();
+    @GetMapping("/get")
+    @Produces("application/json")
+    public ResponseEntity<String> get() throws URISyntaxException, FindFailedException, SerDeException {
+        Collection<String> values = rocksDBKeyValueService.findAll();
+        return ResponseEntity.ok(values.toString());
     }
 }
 

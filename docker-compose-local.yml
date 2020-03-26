@@ -82,6 +82,8 @@ services:
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
       CONFLUENT_METRICS_ENABLE: 'true'
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_CREATE_TOPICS:
+        "end-process:10:3"
 
   schema-registry:
     image: confluentinc/cp-schema-registry:5.3.1

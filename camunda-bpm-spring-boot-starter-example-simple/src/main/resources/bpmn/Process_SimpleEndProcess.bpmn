@@ -4,12 +4,7 @@
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>SequenceFlow_14dsuge</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="SequenceFlow_14dsuge" sourceRef="StartEvent_1" targetRef="ServiceTask_0om9pdv" />
-    <bpmn:sequenceFlow id="SequenceFlow_0hkq1bp" sourceRef="ServiceTask_0om9pdv" targetRef="UserTask_02ntcnj" />
-    <bpmn:task id="ServiceTask_0om9pdv" name="SimpleTask">
-      <bpmn:incoming>SequenceFlow_14dsuge</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_0hkq1bp</bpmn:outgoing>
-    </bpmn:task>
+    <bpmn:sequenceFlow id="SequenceFlow_14dsuge" sourceRef="StartEvent_1" targetRef="Task_0213iv2" />
     <bpmn:endEvent id="EndEvent_083xjoq">
       <bpmn:extensionElements>
         <camunda:properties>
@@ -18,19 +13,37 @@
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_1oqr3ur</bpmn:incoming>
     </bpmn:endEvent>
+    <bpmn:userTask id="UserTask_02ntcnj" name="UserTask">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="kafkaTopic01" value="end-process" />
+        </camunda:properties>
+        <camunda:formData>
+          <camunda:formField id="Nome" label="nome" type="string" defaultValue="ERIK MARQUES DA SILVA" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0ddooea</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0k1jkom</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0k1jkom" sourceRef="UserTask_02ntcnj" targetRef="IntermediateThrowEvent_0hxvkvm" />
     <bpmn:intermediateCatchEvent id="IntermediateThrowEvent_0hxvkvm">
       <bpmn:incoming>SequenceFlow_0k1jkom</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_1oqr3ur</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_0576x7f">
-        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">TP15S</bpmn:timeDuration>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5S</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
-    <bpmn:userTask id="UserTask_02ntcnj" name="UserTask">
-      <bpmn:incoming>SequenceFlow_0hkq1bp</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_0k1jkom</bpmn:outgoing>
-    </bpmn:userTask>
-    <bpmn:sequenceFlow id="SequenceFlow_0k1jkom" sourceRef="UserTask_02ntcnj" targetRef="IntermediateThrowEvent_0hxvkvm" />
     <bpmn:sequenceFlow id="SequenceFlow_1oqr3ur" sourceRef="IntermediateThrowEvent_0hxvkvm" targetRef="EndEvent_083xjoq" />
+    <bpmn:task id="Task_0213iv2" name="SimpleTask">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="kafkaTopic01" value="end-process" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_14dsuge</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0ddooea</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="SequenceFlow_0ddooea" sourceRef="Task_0213iv2" targetRef="UserTask_02ntcnj" />
   </bpmn:process>
   <bpmn:signal id="Signal_00fnj6n" name="testedesinal" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
@@ -42,18 +55,8 @@
         <di:waypoint x="209" y="120" />
         <di:waypoint x="300" y="120" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_0hkq1bp_di" bpmnElement="SequenceFlow_0hkq1bp">
-        <di:waypoint x="400" y="120" />
-        <di:waypoint x="510" y="120" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Task_1g6xfgx_di" bpmnElement="ServiceTask_0om9pdv">
-        <dc:Bounds x="300" y="80" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_18nglij_di" bpmnElement="EndEvent_083xjoq">
         <dc:Bounds x="872" y="102" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="IntermediateCatchEvent_099tdwn_di" bpmnElement="IntermediateThrowEvent_0hxvkvm">
-        <dc:Bounds x="702" y="102" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_02ntcnj_di" bpmnElement="UserTask_02ntcnj">
         <dc:Bounds x="510" y="80" width="100" height="80" />
@@ -62,9 +65,19 @@
         <di:waypoint x="610" y="120" />
         <di:waypoint x="702" y="120" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateCatchEvent_099tdwn_di" bpmnElement="IntermediateThrowEvent_0hxvkvm">
+        <dc:Bounds x="702" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_1oqr3ur_di" bpmnElement="SequenceFlow_1oqr3ur">
         <di:waypoint x="738" y="120" />
         <di:waypoint x="872" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_0213iv2_di" bpmnElement="Task_0213iv2">
+        <dc:Bounds x="300" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0ddooea_di" bpmnElement="SequenceFlow_0ddooea">
+        <di:waypoint x="400" y="120" />
+        <di:waypoint x="510" y="120" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

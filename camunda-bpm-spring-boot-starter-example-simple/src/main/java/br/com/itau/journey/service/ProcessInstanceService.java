@@ -4,11 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.camunda.bpm.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.net.URISyntaxException;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -36,7 +38,13 @@ public class ProcessInstanceService {
         return processInstanceId;
     }
 
-    public ResponseEntity<String> getProcessInstanceId(String processInstanceId) throws URISyntaxException {
-        return ksqlInstanceService.getProcessInstanceId(processInstanceId);
+    public ResponseEntity<String> getProcessInstanceId(String ksql) throws URISyntaxException {
+        return ksqlInstanceService.getProcessInstanceId(ksql);
     }
+
+    public List<Task> findPendentTasks(String processInstanceId) {
+        return taskService.createTaskQuery().processInstanceId(processInstanceId).list();
+    }
+
+
 }

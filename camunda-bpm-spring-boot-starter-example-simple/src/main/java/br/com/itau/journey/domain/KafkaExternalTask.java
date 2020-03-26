@@ -11,9 +11,11 @@ import lombok.NoArgsConstructor;
 @Data
 public class KafkaExternalTask {
 
+    private String type;
     private String processInstanceId;
+    private String taskId;
     private String activityInstanceId;
     private String currentActivityId;
-    private String camundaTopic;
+    private Object infoUserTask;
 
 }
