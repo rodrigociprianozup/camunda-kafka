@@ -1,0 +1,13 @@
+server:
+  port: 8081
+camunda:
+  endpoint: localhost:8080/rest
+  worker-topic: Worker-Polling-1
+  worker-id: Worker-Polling-1
+  worker-schedule: 5000
+  worker-max-taks: 3
+  worker-taks-thread: 10
+  worker-polling-thread: 5
+  worker-max-queue-size: 10
+  worker-time: time1
+  worker-multiple-topics: "Worker-Polling-1, Worker-Polling-1B, Worker-Polling-1C"

@@ -1,5 +1,13 @@
 spring.application.name: simpleApplication
 spring:
+  image: postgres
+  environment:
+    POSTGRES_PASSWORD: "Postgres2019!"
+  ports:
+    - "15432:5432"
+  volumes:
+    - /home/renatogroffe/Desenvolvimento/Docker-Compose/PostgreSQL:/var/lib/postgresql/data
+    -
   datasource:
     url: jdbc:postgresql://localhost:5432/journey
     username: uaiso
@@ -10,6 +18,7 @@ spring:
       hibernate:
         temp:
           use_jdbc_metadata_defaults: false
+
 camunda:
   bpm:
     webapp:

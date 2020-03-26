@@ -1,9 +1,9 @@
 package br.com.itau.journey.controller;
 
-import br.com.itau.journey.domain.KafkaExternalTasks;
 import br.com.itau.journey.dto.RequestStartDTO;
 import br.com.itau.journey.rocksdb.RocksDBKeyValueService;
 import br.com.itau.journey.rocksdb.kv.exception.FindFailedException;
+import br.com.itau.journey.rocksdb.kv.exception.SaveFailedException;
 import br.com.itau.journey.rocksdb.mapper.exception.SerDeException;
 import br.com.itau.journey.service.ProcessInstanceService;
 import lombok.RequiredArgsConstructor;
@@ -14,15 +14,16 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("instance")
+@RequestMapping("instance/rocksDB")
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Slf4j
-public class ProcessInstanceController {
+public class ProcessInstanceDBKeyValueController {
 
     private final ProcessInstanceService processInstanceService;
     private final RocksDBKeyValueService rocksDBKeyValueService;
@@ -30,16 +31,11 @@ public class ProcessInstanceController {
     @PostMapping("/start")
     @Consumes("application/json")
     @Produces("application/json")
-    public ResponseEntity<String> start(@RequestBody RequestStartDTO requestStart) throws InterruptedException, URISyntaxException {
+    public ResponseEntity<String> start(@RequestBody RequestStartDTO requestStart) throws InterruptedException, URISyntaxException, IOException {
         final String processInstanceId = processInstanceService.startProcessInstance(requestStart.getBpmnInstance());
         log.info(":: 1 - Created instance with id {}", processInstanceId);
 
-        String ksql = "select * from END_PROCESS_STREAM " +
-                " where processInstanceId = '" + processInstanceId + "' " +
-                " and (type = 'UserTask' or type = 'EndEvent') " +
-                " limit 1;";
-
-        String result = waitingProcessEnd(ksql);
+        String result = waitingProcessEnd(processInstanceId);
 
         log.info(":: 2 - Result of Streams {}", result);
 
@@ -47,30 +43,26 @@ public class ProcessInstanceController {
     }
 
     @PostMapping("/{processInstanceId}/complete/{taskId}")
-    public ResponseEntity<String> complete(@PathVariable String processInstanceId, @PathVariable String taskId) throws URISyntaxException, InterruptedException {
+    public ResponseEntity<String> complete(@PathVariable String processInstanceId, @PathVariable String taskId) throws URISyntaxException, InterruptedException, IOException, SaveFailedException {
         processInstanceService.completeTask(taskId);
+        rocksDBKeyValueService.setCompleteTask(taskId, processInstanceId);
         log.info(":: 1 - Complete task id {}", taskId);
 
-        String ksql = "select * from END_PROCESS_STREAM " +
-                " where processInstanceId = '" + processInstanceId + "' " +
-                " and type = 'EndEvent' " +
-                " limit 1;";
-
-        String result = waitingProcessEnd(ksql);
+        String result = waitingProcessEnd(processInstanceId);
 
         log.info(":: 2 - Result of Streams {}", result);
 
         return ResponseEntity.ok(result);
     }
 
-    private String waitingProcessEnd(String ksql) throws InterruptedException, URISyntaxException {
+    private String waitingProcessEnd(String processInstanceId) throws InterruptedException, URISyntaxException, IOException {
         boolean x = true;
-        ResponseEntity<String> result = null;
+        Optional<String> result = null;
         while (x) {
-            result = processInstanceService.getProcessInstanceId(ksql);
-            x = result.getBody() == null || result.getBody().isEmpty();
+            result = rocksDBKeyValueService.getProcessInstance(processInstanceId);
+            x = !result.isPresent();
         }
-        return result.getBody();
+        return result.get();
     }
 
     @GetMapping("/get/{processInstanceId}")

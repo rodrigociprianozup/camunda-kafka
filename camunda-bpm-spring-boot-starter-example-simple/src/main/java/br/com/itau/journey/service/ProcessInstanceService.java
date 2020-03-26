@@ -38,8 +38,8 @@ public class ProcessInstanceService {
         return processInstanceId;
     }
 
-    public ResponseEntity<String> getProcessInstanceId(String ksql) throws URISyntaxException {
-        return ksqlInstanceService.getProcessInstanceId(ksql);
+    public ResponseEntity<String> getProcessInstance(String ksql) throws URISyntaxException {
+        return ksqlInstanceService.getProcessInstance(ksql);
     }
 
     public List<Task> findPendentTasks(String processInstanceId) {

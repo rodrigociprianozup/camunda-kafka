@@ -15,7 +15,7 @@ import java.util.HashMap;
 @Slf4j
 public class KSQLInstanceService {
 
-    public ResponseEntity<String> getProcessInstanceId(String ksql) throws URISyntaxException {
+    public ResponseEntity<String> getProcessInstance(String ksql) throws URISyntaxException {
         URI uri = new URI("http://localhost:8088/query");
 
         log.info(":: 3 - URL Request {}", uri);
