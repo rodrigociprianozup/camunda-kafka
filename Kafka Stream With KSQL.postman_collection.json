@@ -1,0 +1,277 @@
+{
+	"info": {
+		"_postman_id": "4aa1c2a6-b4c5-4fa0-98a6-a7f711b4c3d3",
+		"name": "Kafka Stream With KSQL",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "http://localhost:8088/query",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"ksql\": \"select * from END_PROCESS_STREAM  where type = 'UserTask' and processInstanceId = 'a264e1b3-6f6d-11ea-b5cd-5a1866cc685a' limit 1;\",\n  \"streamsProperties\": {\n    \"ksql.streams.auto.offset.reset\": \"earliest\"\n  }\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8088/query",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8088",
+					"path": [
+						"query"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8088/ksql",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.ksql.v1+json; charset=utf-8"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"ksql\": \"LIST STREAMS;\",\n  \"streamsProperties\": {}\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8088/ksql",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8088",
+					"path": [
+						"ksql"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "start instance ksql streams",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "75bbc253-312b-401b-aed4-89ef8314619f",
+						"exec": [
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"bpmnInstance\": \"bpmnEndProcess\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/instance/ksql/start",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"instance",
+						"ksql",
+						"start"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "start instance rocksDB",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "75bbc253-312b-401b-aed4-89ef8314619f",
+						"exec": [
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"bpmnInstance\": \"bpmnEndProcessMultiple\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/instance/rocksDB/start",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"instance",
+						"rocksDB",
+						"start"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "complete rocksDB",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "75bbc253-312b-401b-aed4-89ef8314619f",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "localhost:8080/instance/rocksDB/{{instanceId}}/complete/{{taskId}}",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"instance",
+						"rocksDB",
+						"{{instanceId}}",
+						"complete",
+						"{{taskId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "complete ksql",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "75bbc253-312b-401b-aed4-89ef8314619f",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "localhost:8080/instance/ksql/{{instanceId}}/complete/{{taskId}}",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"instance",
+						"ksql",
+						"{{instanceId}}",
+						"complete",
+						"{{taskId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "localhost:8080/instance/get/4f5bab84-6f91-11ea-8b04-32e835fa5c06",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "localhost:8080/instance/rocksDB/get/{{instanceId}}",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"instance",
+						"rocksDB",
+						"get",
+						"{{instanceId}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
