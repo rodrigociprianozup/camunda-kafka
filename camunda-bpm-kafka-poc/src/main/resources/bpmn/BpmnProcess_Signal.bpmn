@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0l8j3p6" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.5.0">
+  <bpmn:process id="bpmnProcessSignal" name="BPMNProcessSignal" isExecutable="true">
+    <bpmn:startEvent id="StartEvent" name="StartEvent">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="kafkaTopic01" value="steps-process" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>SequenceFlow_1dcr1hg</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1dcr1hg" sourceRef="StartEvent" targetRef="UsertTaskUpdateProposal" />
+    <bpmn:userTask id="UsertTaskNome" name="User Task Nome">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="kafkaTopic01" value="steps-process" />
+        </camunda:properties>
+        <camunda:formData>
+          <camunda:formField id="Nome" label="Nome" type="string" defaultValue="ERIK MARQUES DA SILVA" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1kwueih</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1k1nhav</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1k1nhav" sourceRef="UsertTaskNome" targetRef="UsertTaskCPF" />
+    <bpmn:userTask id="UsertTaskCPF" name="User Task CPF">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="kafkaTopic01" value="steps-process" />
+        </camunda:properties>
+        <camunda:formData>
+          <camunda:formField id="CPF" label="CPF" type="string" defaultValue="380.192.588-92" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1k1nhav</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0118j59</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0118j59" sourceRef="UsertTaskCPF" targetRef="UsertTaskFraud" />
+    <bpmn:endEvent id="EndEvent_0oianmt">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="kafkaTopic01" value="steps-process" />
+          <camunda:property name="kafkaTopic02" value="end-process" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_186uqqc</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="UsertTaskUpdateProposal" name="Atualiza Proposta">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="kafkaTopic01" value="update-proposal-process" />
+          <camunda:property name="kafkaTopic02" value="steps-process" />
+          <camunda:property name="internalUserTask" value="true" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1dcr1hg</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0t83niy</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:intermediateCatchEvent id="IntermediateThrowEvent_1t9ro5a">
+      <bpmn:incoming>SequenceFlow_0t83niy</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1kwueih</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_0uzopvc" signalRef="Signal_1g0c4o9" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0t83niy" sourceRef="UsertTaskUpdateProposal" targetRef="IntermediateThrowEvent_1t9ro5a" />
+    <bpmn:sequenceFlow id="SequenceFlow_1kwueih" sourceRef="IntermediateThrowEvent_1t9ro5a" targetRef="UsertTaskNome" />
+    <bpmn:sequenceFlow id="SequenceFlow_177ys3u" sourceRef="UsertTaskFraud" targetRef="IntermediateThrowEvent_0mjrjas" />
+    <bpmn:sequenceFlow id="SequenceFlow_186uqqc" sourceRef="IntermediateThrowEvent_0mjrjas" targetRef="EndEvent_0oianmt" />
+    <bpmn:intermediateCatchEvent id="IntermediateThrowEvent_0mjrjas">
+      <bpmn:incoming>SequenceFlow_177ys3u</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_186uqqc</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_1t1vyl5" signalRef="Signal_0ubf7qs" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:task id="UsertTaskFraud" name="Usert Task Fraude">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="kafkaTopic01" value="fraud-process" />
+          <camunda:property name="kafkaTopic02" value="steps-process" />
+          <camunda:property name="internalUserTask" value="true" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0118j59</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_177ys3u</bpmn:outgoing>
+    </bpmn:task>
+  </bpmn:process>
+  <bpmn:signal id="Signal_1g0c4o9" name="atualizaPropostaSignal" />
+  <bpmn:signal id="Signal_0ubf7qs" name="fraudSignal" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="bpmnProcessSignal">
+      <bpmndi:BPMNShape id="StartEvent_0bem1ux_di" bpmnElement="StartEvent">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="144" y="145" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1dcr1hg_di" bpmnElement="SequenceFlow_1dcr1hg">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_0tm2fuo_di" bpmnElement="UsertTaskNome">
+        <dc:Bounds x="450" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1k1nhav_di" bpmnElement="SequenceFlow_1k1nhav">
+        <di:waypoint x="550" y="120" />
+        <di:waypoint x="590" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_0vq7qqg_di" bpmnElement="UsertTaskCPF">
+        <dc:Bounds x="590" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0118j59_di" bpmnElement="SequenceFlow_0118j59">
+        <di:waypoint x="690" y="120" />
+        <di:waypoint x="760" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0oianmt_di" bpmnElement="EndEvent_0oianmt">
+        <dc:Bounds x="1002" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_13065if_di" bpmnElement="UsertTaskUpdateProposal">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="IntermediateCatchEvent_0uk91lt_di" bpmnElement="IntermediateThrowEvent_1t9ro5a">
+        <dc:Bounds x="372" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0t83niy_di" bpmnElement="SequenceFlow_0t83niy">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="372" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1kwueih_di" bpmnElement="SequenceFlow_1kwueih">
+        <di:waypoint x="408" y="120" />
+        <di:waypoint x="450" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_177ys3u_di" bpmnElement="SequenceFlow_177ys3u">
+        <di:waypoint x="860" y="120" />
+        <di:waypoint x="912" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_186uqqc_di" bpmnElement="SequenceFlow_186uqqc">
+        <di:waypoint x="948" y="120" />
+        <di:waypoint x="1002" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateCatchEvent_0euqsxy_di" bpmnElement="IntermediateThrowEvent_0mjrjas">
+        <dc:Bounds x="912" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_1yjvv9p_di" bpmnElement="UsertTaskFraud">
+        <dc:Bounds x="760" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

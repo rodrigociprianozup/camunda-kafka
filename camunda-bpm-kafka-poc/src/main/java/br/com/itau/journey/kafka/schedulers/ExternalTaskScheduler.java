@@ -25,14 +25,10 @@ import static java.util.Optional.ofNullable;
 public class ExternalTaskScheduler {
 
     private ProducerService producerService;
-    private RocksDBKeyValueService rocksDBKeyValueService;
-    private ObjectMapper objectMapper;
 
     @Autowired
-    public ExternalTaskScheduler(ProducerService producerService, RocksDBKeyValueService rocksDBKeyValueService, ObjectMapper objectMapper) {
+    public ExternalTaskScheduler(ProducerService producerService) {
         this.producerService = producerService;
-        this.rocksDBKeyValueService = rocksDBKeyValueService;
-        this.objectMapper = objectMapper;
     }
 
     public void scheduler(ExternalTaskAccessInfo externalTaskAccessInfo) {

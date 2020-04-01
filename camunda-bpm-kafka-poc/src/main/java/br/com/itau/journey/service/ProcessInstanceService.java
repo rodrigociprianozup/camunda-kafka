@@ -42,6 +42,7 @@ public class ProcessInstanceService {
                         .internalUserTask(Boolean.FALSE)
                         .taskId(taskId)
                         .processInstanceId(task.get().getProcessInstanceId())
+//                        .infoUserTask(task.get().gethan)
                         .build())
                 .setHeader(KafkaHeaders.TOPIC, "user-tasks-process")
                 .build();
@@ -55,7 +56,8 @@ public class ProcessInstanceService {
                 .withPayload(KafkaExternalTask.builder()
                             .type(TypeComponent.START_EVENT.getEvent())
                             .uuid(uuid)
-                            .internalUserTask(Boolean.TRUE).bpmnInstance(bpmnInstance).uuid(uuid).build())
+                            .internalUserTask(Boolean.TRUE)
+                            .bpmnInstance(bpmnInstance).uuid(uuid).build())
                 .setHeader(KafkaHeaders.TOPIC, "start-process")
                 .build();
         producerService.sendToKafka(message);

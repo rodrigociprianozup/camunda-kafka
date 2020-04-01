@@ -72,7 +72,8 @@ public class ConsumerService {
     public void listenUpdateProposal(String message) throws IOException, InterruptedException {
         KafkaExternalTask externalTask = this.objectMapper.readValue(message, KafkaExternalTask.class);
         log.info(":: Listener Update Proposal Process: {}",  message);
-        sendKafka(externalTask, TOPIC_COMPLETE_TASK);
+        // update proposal process
+        this.sendKafka(externalTask, TOPIC_COMPLETE_TASK);
     }
 
     @KafkaListener(
@@ -83,7 +84,7 @@ public class ConsumerService {
         KafkaExternalTask externalTask = this.objectMapper.readValue(message, KafkaExternalTask.class);
         externalTask.setInternalUserTask(Boolean.FALSE);
         log.info(":: Listener User Task Process: {}",  message);
-        sendKafka(externalTask, TOPIC_COMPLETE_TASK);
+        this.sendKafka(externalTask, TOPIC_COMPLETE_TASK);
         rocksDBKeyValueService.setCompleteTask(externalTask.getTaskId(), externalTask.getProcessInstanceId());
     }
 
@@ -94,7 +95,7 @@ public class ConsumerService {
     public void listenFraud(String message) throws IOException, InterruptedException {
         KafkaExternalTask externalTask = this.objectMapper.readValue(message, KafkaExternalTask.class);
         log.info(":: Listener Fraud Process: {}",  message);
-        sendKafka(externalTask, TOPIC_COMPLETE_TASK);
+        this.sendKafka(externalTask, TOPIC_COMPLETE_TASK);
     }
 
     @KafkaListener(
@@ -105,7 +106,7 @@ public class ConsumerService {
         Thread.sleep(3000);
         KafkaExternalTask externalTask = this.objectMapper.readValue(message, KafkaExternalTask.class);
         log.info(":: Listener Complete Process: {}",  message);
-        completeTask(externalTask.getTaskId());
+        this.completeTask(externalTask.getTaskId());
     }
 
     private void completeTask(String taskId) {

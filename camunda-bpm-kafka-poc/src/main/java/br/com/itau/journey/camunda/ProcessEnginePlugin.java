@@ -92,7 +92,7 @@ public class ProcessEnginePlugin extends AbstractProcessEnginePlugin {
             ActivityBehavior activityBehavior = activity.getActivityBehavior();
             if (activityBehavior instanceof NoneStartEventActivityBehavior) {
                 List<String> kafkaTopics = getTopics(startEvent);
-                activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, TypeComponent.START_EVENT));
+                activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, activity.getId(),TypeComponent.START_EVENT));
             }
         }
 
@@ -101,7 +101,7 @@ public class ProcessEnginePlugin extends AbstractProcessEnginePlugin {
             ActivityBehavior activityBehavior = activity.getActivityBehavior();
             if (activityBehavior instanceof NoneEndEventActivityBehavior) {
                 List<String> kafkaTopics = getTopics(endProcess);
-                activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, TypeComponent.END_EVENT));
+                activity.addListener(START_EVENT, getExecutionListener(kafkaTopics, activity.getId(),TypeComponent.END_EVENT));
             }
         }
 
@@ -162,7 +162,7 @@ public class ProcessEnginePlugin extends AbstractProcessEnginePlugin {
             };
         }
 
-        private ExecutionListener getExecutionListener(List<String> kafkaTopics, TypeComponent type) {
+        private ExecutionListener getExecutionListener(List<String> kafkaTopics, String typeDescription, TypeComponent type) {
             return execution -> {
                 String processInstanceId = execution.getProcessInstanceId();
                 String activityInstanceId = execution.getActivityInstanceId();
@@ -174,6 +174,7 @@ public class ProcessEnginePlugin extends AbstractProcessEnginePlugin {
                         .kafkaTopics(kafkaTopics)
                         .kafkaExternalTask(KafkaExternalTask.builder()
                                 .processInstanceId(processInstanceId)
+                                .typeDescription(typeDescription)
                                 .activityInstanceId(activityInstanceId)
                                 .currentActivityId(currentActivityId)
                                 .taskId(taskId)

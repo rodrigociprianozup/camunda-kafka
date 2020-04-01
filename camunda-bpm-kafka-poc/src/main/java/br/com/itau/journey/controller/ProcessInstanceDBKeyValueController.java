@@ -56,25 +56,29 @@ public class ProcessInstanceDBKeyValueController {
     }
 
     private String waitingProcessEndByUUID(String uuid) throws IOException, FindFailedException {
-        boolean x = true;
+        boolean loop = true;
         Optional<String> result = null;
-        while (x) {
+        while (loop) {
             Optional<String> processInstanceId = rocksDBKeyValueService.findByKey(uuid);
             if (!processInstanceId.isPresent()) {
                 continue;
             }
-            result = Optional.of(this.waitingProcessEnd(processInstanceId.get(), null));
-            x = !result.isPresent();
+            result = Optional.of(this.waitingProcessEnd(processInstanceId.get()));
+            loop = !result.isPresent();
         }
         return result.get();
     }
 
-    private String waitingProcessEnd(String processInstanceId, String taskId) throws IOException, FindFailedException {
-        boolean x = true;
+    private String waitingProcessEnd(String processInstanceId) throws IOException {
+        return this.waitingProcessEnd(processInstanceId, null);
+    }
+
+    private String waitingProcessEnd(String processInstanceId, String taskId) throws IOException {
+        boolean loop = true;
         Optional<String> result = null;
-        while (x) {
+        while (loop) {
             result = rocksDBKeyValueService.getProcessInstance(processInstanceId, taskId);
-            x = !result.isPresent();
+            loop = !result.isPresent();
         }
         return result.get();
     }
