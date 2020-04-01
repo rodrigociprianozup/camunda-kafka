@@ -59,7 +59,12 @@ services:
       CONFLUENT_METRICS_ENABLE: 'true'
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
       KAFKA_CREATE_TOPICS:
-        "end-process:1:1"
+        "start-process:1:1,
+         update-proposal-process:1:1,
+         user-tasks-process:1:1
+         fraud-process:1:1,
+         steps-process:1:1,
+         end-process:1:1"
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:5.3.1
