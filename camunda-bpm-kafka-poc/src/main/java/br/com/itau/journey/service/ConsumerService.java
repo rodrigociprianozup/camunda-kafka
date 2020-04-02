@@ -52,6 +52,7 @@ public class ConsumerService {
         externalTask.setProcessInstanceId(processInstanceId);
         log.info(":: Listener Start ProcessInstanceId {} - Process: {}",processInstanceId,  message);
         rocksDBKeyValueService.save(externalTask.getUuid(), externalTask.getProcessInstanceId());
+        rocksDBKeyValueService.save(externalTask.getCpf(), externalTask.getProcessInstanceId());
     }
 
     @KafkaListener(
@@ -84,6 +85,7 @@ public class ConsumerService {
         KafkaExternalTask externalTask = this.objectMapper.readValue(message, KafkaExternalTask.class);
         externalTask.setInternalUserTask(Boolean.FALSE);
         log.info(":: Listener User Task Process: {}",  message);
+        // atualizacao dados cadastrais
         this.sendKafka(externalTask, TOPIC_COMPLETE_TASK);
         rocksDBKeyValueService.setCompleteTask(externalTask.getTaskId(), externalTask.getProcessInstanceId());
     }

@@ -2,6 +2,10 @@ package br.com.itau.journey.service;
 
 import br.com.itau.journey.constant.TypeComponent;
 import br.com.itau.journey.domain.KafkaExternalTask;
+import br.com.itau.journey.dto.RequestStartDTO;
+import br.com.itau.journey.rocksdb.RocksDBKeyValueService;
+import br.com.itau.journey.rocksdb.kv.exception.FindFailedException;
+import br.com.itau.journey.rocksdb.mapper.exception.SerDeException;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
@@ -31,6 +35,8 @@ public class ProcessInstanceService {
     private KSQLInstanceService ksqlInstanceService;
     @Autowired
     private ProducerService producerService;
+    @Autowired
+    private RocksDBKeyValueService rocksDBKeyValueService;
 
     public String completeTask(String taskId) {
         Optional<Task> task = Optional.of(taskService.createTaskQuery().taskId(taskId).singleResult());
@@ -42,7 +48,6 @@ public class ProcessInstanceService {
                         .internalUserTask(Boolean.FALSE)
                         .taskId(taskId)
                         .processInstanceId(task.get().getProcessInstanceId())
-//                        .infoUserTask(task.get().gethan)
                         .build())
                 .setHeader(KafkaHeaders.TOPIC, "user-tasks-process")
                 .build();
@@ -50,18 +55,27 @@ public class ProcessInstanceService {
         return task.get().getProcessInstanceId();
     }
 
-    public String start(String bpmnInstance) {
+    public String start(RequestStartDTO request) {
         String uuid = UUID.randomUUID().toString();
         Message<KafkaExternalTask> message = MessageBuilder
                 .withPayload(KafkaExternalTask.builder()
                             .type(TypeComponent.START_EVENT.getEvent())
+                            .cpf(request.getCpf())
                             .uuid(uuid)
                             .internalUserTask(Boolean.TRUE)
-                            .bpmnInstance(bpmnInstance).uuid(uuid).build())
+                            .bpmnInstance(request.getBpmnInstance()).uuid(uuid).build())
                 .setHeader(KafkaHeaders.TOPIC, "start-process")
                 .build();
         producerService.sendToKafka(message);
         return uuid;
+    }
+
+    public Optional<String> getProcessingInstance(String cpf) throws FindFailedException, SerDeException {
+        Optional<String> values = rocksDBKeyValueService.findByKey(cpf);
+        if (values.isPresent()) {
+            return values;
+        }
+        return Optional.empty();
     }
 
     public String startProcessInstance(String sample) {

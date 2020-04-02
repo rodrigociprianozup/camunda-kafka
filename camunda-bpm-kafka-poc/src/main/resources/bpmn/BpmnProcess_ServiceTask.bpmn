@@ -37,7 +37,7 @@
       <bpmn:outgoing>SequenceFlow_0118j59</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:sequenceFlow id="SequenceFlow_0118j59" sourceRef="UsertTaskCPF" targetRef="UsertTaskFraud" />
-    <bpmn:endEvent id="EndEvent_0oianmt">
+    <bpmn:endEvent id="EndEvent_0oianmt" name="EndEvent">
       <bpmn:extensionElements>
         <camunda:properties>
           <camunda:property name="kafkaTopic01" value="steps-process" />
@@ -84,13 +84,13 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_0tbe9eb_di" bpmnElement="SequenceFlow_0tbe9eb">
         <di:waypoint x="340" y="120" />
-        <di:waypoint x="400" y="120" />
+        <di:waypoint x="410" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="UserTask_0tm2fuo_di" bpmnElement="UsertTaskNome">
-        <dc:Bounds x="400" y="80" width="100" height="80" />
+        <dc:Bounds x="410" y="80" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_1k1nhav_di" bpmnElement="SequenceFlow_1k1nhav">
-        <di:waypoint x="500" y="120" />
+        <di:waypoint x="510" y="120" />
         <di:waypoint x="560" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="UserTask_0vq7qqg_di" bpmnElement="UsertTaskCPF">
@@ -102,6 +102,9 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="EndEvent_0oianmt_di" bpmnElement="EndEvent_0oianmt">
         <dc:Bounds x="880" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="874" y="145" width="48" height="14" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_108ota7_di" bpmnElement="SequenceFlow_108ota7">
         <di:waypoint x="820" y="120" />

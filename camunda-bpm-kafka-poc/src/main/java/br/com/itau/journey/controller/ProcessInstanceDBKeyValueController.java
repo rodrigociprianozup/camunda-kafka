@@ -31,14 +31,24 @@ public class ProcessInstanceDBKeyValueController {
     @Consumes("application/json")
     @Produces("application/json")
     public ResponseEntity<String> start(@RequestBody RequestStartDTO requestStart) throws IOException, FindFailedException {
-        String uuid = processInstanceService.start(requestStart.getBpmnInstance());
+        Optional<String> processInstanceId = processInstanceService.getProcessingInstance(requestStart.getCpf());
 
+        boolean instanceProcessing = false;
+        if (processInstanceId.isPresent()) {
+            instanceProcessing = !rocksDBKeyValueService.isEndEvent(processInstanceId.get());
+        }
+
+        if (instanceProcessing && !requestStart.isNewProposal()) {
+            log.info(":: 1 - Created instance with processInstanceId {}", processInstanceId);
+            String result = waitingProcessEnd(processInstanceId.get());
+            log.info(":: 2 - Result of Streams {}", result);
+            return ResponseEntity.ok(result);
+        }
+
+        String uuid = processInstanceService.start(requestStart);
         log.info(":: 1 - Created instance with id execution {}", uuid);
-
         String result = waitingProcessEndByUUID(uuid);
-
         log.info(":: 2 - Result of Streams {}", result);
-
         return ResponseEntity.ok(result);
     }
 

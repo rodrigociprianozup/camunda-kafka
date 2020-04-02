@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class RequestStartDTO {
 
     private String bpmnInstance;
+    private String cpf;
+    private boolean newProposal;
 }

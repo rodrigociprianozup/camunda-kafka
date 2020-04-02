@@ -108,6 +108,18 @@ public class RocksDBKeyValueService extends RocksDBKeyValueRepository<String, St
         return Optional.empty();
     }
 
+    public boolean isEndEvent(String processInstanceId) throws FindFailedException, IOException {
+        Optional<String> values = super.findByKey(processInstanceId);
+        if (values.isPresent()) {
+            KafkaExternalTasks kafkaExternalTasks = this.objectMapper.readValue(values.get(), KafkaExternalTasks.class);
+            Optional<KafkaExternalTask> endEvent = kafkaExternalTasks.getKafkaExternalTasks().stream().filter(this::isEndEvent).findAny();
+            if (endEvent.isPresent()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean isEndEvent(KafkaExternalTask item) {
         return END_EVENT.getEvent().equals(item.getType());
     }

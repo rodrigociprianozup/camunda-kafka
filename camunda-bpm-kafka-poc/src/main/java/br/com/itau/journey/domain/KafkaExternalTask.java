@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class KafkaExternalTask {
 
     private String type;
+    private String cpf;
     private String typeDescription;
     private boolean internalUserTask = true;
     private String uuid;
