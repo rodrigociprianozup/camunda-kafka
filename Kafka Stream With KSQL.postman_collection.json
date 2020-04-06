@@ -141,7 +141,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"bpmnInstance\": \"bpmnEndProcessMultiple\"\n}",
+					"raw": "{\n    \"bpmnInstance\": \"bpmnProcess\",\n    \"cpf\": \"38019258892\",\n    \"newProposal\": false\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -149,7 +149,7 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:8080/instance/rocksDB/start",
+					"raw": "localhost:8080/instance/rocksDB/start/",
 					"host": [
 						"localhost"
 					],
@@ -157,7 +157,8 @@
 					"path": [
 						"instance",
 						"rocksDB",
-						"start"
+						"start",
+						""
 					]
 				}
 			},
@@ -188,7 +189,7 @@
 					}
 				],
 				"url": {
-					"raw": "localhost:8080/instance/rocksDB/{{instanceId}}/complete/{{taskId}}",
+					"raw": "localhost:8080/instance/rocksDB/8da9c0d0-73a2-11ea-84ce-46f4134132f8/complete",
 					"host": [
 						"localhost"
 					],
@@ -196,9 +197,8 @@
 					"path": [
 						"instance",
 						"rocksDB",
-						"{{instanceId}}",
-						"complete",
-						"{{taskId}}"
+						"8da9c0d0-73a2-11ea-84ce-46f4134132f8",
+						"complete"
 					]
 				}
 			},
