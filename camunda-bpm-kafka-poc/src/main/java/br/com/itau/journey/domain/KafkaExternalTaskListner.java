@@ -5,16 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Data
-public class ExternalTaskAccessInfo {
+public class KafkaExternalTaskListner {
 
-    private List<String> kafkaTopics;
-
+    private Number rowTime;
+    private String rowKey;
     private KafkaExternalTask payload;
+
 
 }

@@ -149,7 +149,7 @@ public class ProcessEnginePlugin extends AbstractProcessEnginePlugin {
                 logExternalTaskInfo(kafkaTopics, processInstanceId, taskId, info);
                 ExternalTaskAccessInfo externalTaskAccessInfo = ExternalTaskAccessInfo.builder()
                         .kafkaTopics(kafkaTopics)
-                        .kafkaExternalTask(KafkaExternalTask.builder()
+                        .payload(KafkaExternalTask.builder()
                                 .processInstanceId(processInstanceId)
                                 .typeDescription(typeDescription)
                                 .taskId(taskId)
@@ -164,7 +164,7 @@ public class ProcessEnginePlugin extends AbstractProcessEnginePlugin {
 
         private ExecutionListener getExecutionListener(List<String> kafkaTopics, String typeDescription, TypeComponent type) {
             return execution -> {
-                String processInstanceId = execution.getProcessInstanceId();
+                    String processInstanceId = execution.getProcessInstanceId();
                 String activityInstanceId = execution.getActivityInstanceId();
                 String currentActivityId = execution.getCurrentActivityId();
                 String taskId = execution.getId();
@@ -172,7 +172,7 @@ public class ProcessEnginePlugin extends AbstractProcessEnginePlugin {
                 logExternalTaskInfo(kafkaTopics, processInstanceId);
                 ExternalTaskAccessInfo externalTaskAccessInfo = ExternalTaskAccessInfo.builder()
                         .kafkaTopics(kafkaTopics)
-                        .kafkaExternalTask(KafkaExternalTask.builder()
+                        .payload(KafkaExternalTask.builder()
                                 .processInstanceId(processInstanceId)
                                 .typeDescription(typeDescription)
                                 .activityInstanceId(activityInstanceId)

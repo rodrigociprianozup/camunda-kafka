@@ -57,6 +57,7 @@ public class ProcessInstanceService {
 
     public String start(RequestStartDTO request) {
         String uuid = UUID.randomUUID().toString();
+
         Message<KafkaExternalTask> message = MessageBuilder
                 .withPayload(KafkaExternalTask.builder()
                             .type(TypeComponent.START_EVENT.getEvent())
@@ -66,6 +67,7 @@ public class ProcessInstanceService {
                             .bpmnInstance(request.getBpmnInstance()).uuid(uuid).build())
                 .setHeader(KafkaHeaders.TOPIC, "start-process")
                 .build();
+
         producerService.sendToKafka(message);
         return uuid;
     }

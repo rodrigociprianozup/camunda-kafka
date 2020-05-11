@@ -26,11 +26,17 @@ public class ProducerService {
     @Async
     public void sendToKafka(Message<KafkaExternalTask> kafkaExternalTaskMessage) {
 
-        ListenableFuture<SendResult<String, Message<KafkaExternalTask>>> future = template.send(kafkaExternalTaskMessage);
+        ListenableFuture<SendResult<String, Message<KafkaExternalTask>>> future =
+                template.send(kafkaExternalTaskMessage.getHeaders().get("kafka_topic").toString()
+                        ,kafkaExternalTaskMessage.getPayload().getTaskId(),
+                        kafkaExternalTaskMessage);
         future.addCallback(new ListenableFutureCallback<SendResult<String, Message<KafkaExternalTask>>>() {
+
 
             @Override
             public void onSuccess(SendResult<String, Message<KafkaExternalTask>> result) {
+                //alimentar ktable
+
                 log.info("Success :: " + ToStringBuilder.reflectionToString(result.toString()));
             }
 

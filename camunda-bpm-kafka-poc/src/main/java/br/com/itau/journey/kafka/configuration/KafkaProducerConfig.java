@@ -43,13 +43,13 @@ public class KafkaProducerConfig {
 
     @Bean
     public ProducerFactory<String, Message<KafkaExternalTask>> producerFactory() {
-        DefaultKafkaProducerFactory<String, Message<KafkaExternalTask>> kafkaProducerFactory = new DefaultKafkaProducerFactory<>(producerConfigs());
+        DefaultKafkaProducerFactory<String,Message<KafkaExternalTask>> kafkaProducerFactory = new DefaultKafkaProducerFactory<>(producerConfigs());
         kafkaProducerFactory.setValueSerializer(new JsonSerializer<>(new ObjectMapper().registerModule(new JavaTimeModule()).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)));
         return kafkaProducerFactory;
     }
 
     @Bean
-    public KafkaTemplate<String, Message<KafkaExternalTask>> kafkaTemplate() {
+    public KafkaTemplate<String,  Message<KafkaExternalTask>> kafkaTemplate() {
         return new KafkaTemplate(this.producerFactory());
     }
 }

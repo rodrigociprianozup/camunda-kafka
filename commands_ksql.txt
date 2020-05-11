@@ -1,0 +1,6 @@
+--Comando para executar o ksqldb-cli
+docker-compose -f docke-compose-ktable exec ksqldb-cli ksql  http://ksqldb-server:8088
+--Criar table;
+create table steps_process_table (payload STRUCT<processInstanceId varchar, taskId varchar, type varchar>) with(kafka_topic = 'steps-process', value_format='JSON', key= 'taskId');
+--Select para buscar registros referente a table criada acima:
+select ROWTIME,ROWKEY,payload->processInstanceId, payload->taskid, payload->type from steps_process_table emit changes;`

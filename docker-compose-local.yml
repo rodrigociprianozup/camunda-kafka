@@ -11,7 +11,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - /Users/internalit/Documents/docker-compose/PostgreSQLJourney:/var/lib/postgresql/data
+      - /Users/zupper/Documents/docker-compose/PostgreSQLJourney:/var/lib/postgresql/data
 
   pgadmin-compose:
     image: dpage/pgadmin4
@@ -21,7 +21,7 @@ services:
     ports:
       - "16543:80"
     volumes:
-      - /Users/internalit/Documents/docker-compose/pgadmin:/var/lib/pgadmin
+      - /Users/zupper/Documents/docker-compose/pgadmin:/var/lib/pgadmin
     networks:
       - default
     depends_on:
@@ -50,7 +50,6 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
@@ -63,8 +62,10 @@ services:
          update-proposal-process:1:1,
          user-tasks-process:1:1
          fraud-process:1:1,
+         credit-process:1:1,
          steps-process:1:1,
-         end-process:1:1"
+         end-process:1:1
+         "
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:5.3.1
@@ -112,4 +113,23 @@ services:
     networks:
       - default
 
-
+  ksql-cli:
+    image: confluentinc/cp-ksql-cli:5.0.1
+    depends_on:
+      - ksql-server
+    volumes:
+      - $PWD/ksql-scripts/:/data/scripts/
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo -e "\n\n⏳ Waiting for KSQL to be available before launching CLI\n"
+        while [ $$(curl -s -o /dev/null -w %{http_code} http://ksql-server:8088/) -eq 000 ]
+        do
+          echo -e $$(date) "KSQL Server HTTP state: " $$(curl -s -o /dev/null -w %{http_code} http://ksql-server:8088/) " (waiting for 200)"
+          sleep 5
+        done
+        echo -e "\n\n-> Running KSQL commands\n"
+        cat /data/scripts/my-ksql-script.sql <(echo 'EXIT')| ksql http://ksql-server:8088
+        echo -e "\n\n-> Sleeping…\n"
+        sleep infinity

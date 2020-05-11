@@ -35,11 +35,11 @@ public class ExternalTaskScheduler {
         ofNullable(externalTaskAccessInfo)
                 .ifPresent(externalTaskAccessInfo1 -> ofNullable(externalTaskAccessInfo1.getKafkaTopics())
                         .ifPresent(kafkaTopicList -> kafkaTopicList.parallelStream().forEach(sendToKafkaTopic(externalTaskAccessInfo1))));
-    }
+        }
 
     private Consumer<String> sendToKafkaTopic(ExternalTaskAccessInfo externalTaskAccessInfo1) {
         return kafkaTopic -> {
-            Message<KafkaExternalTask> externalTaskMessage = getExternalTaskMessage(externalTaskAccessInfo1.getKafkaExternalTask(), kafkaTopic);
+            Message<KafkaExternalTask> externalTaskMessage = getExternalTaskMessage(externalTaskAccessInfo1.getPayload(), kafkaTopic);
             producerService.sendToKafka(externalTaskMessage);
         };
     }
