@@ -4,3 +4,8 @@ docker-compose -f docke-compose-ktable exec ksqldb-cli ksql  http://ksqldb-serve
 create table steps_process_table (payload STRUCT<processInstanceId varchar, taskId varchar, type varchar>) with(kafka_topic = 'steps-process', value_format='JSON');
 --Select para buscar registros referente a table criada acima:
 select ROWTIME,ROWKEY,payload->processInstanceId, payload->taskid, payload->type from steps_process_table emit changes;`
+
+
+--Acessar redis
+docker-compose -f docker-compose-ktable.yml exec redis redis-cli
+
