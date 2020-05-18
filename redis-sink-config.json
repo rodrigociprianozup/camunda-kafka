@@ -1,9 +1,9 @@
 {
-    "name": "redis-sink",
+    "name": "redis-sink-2",
     "config": {
       "connector.class": "com.github.jcustenborder.kafka.connect.redis.RedisSinkConnector",
       "tasks.max": "1",
-      "topics":"to-redis",
+      "topics":"steps-process",
       "redis.hosts":"redis:6379"
     }
 }
