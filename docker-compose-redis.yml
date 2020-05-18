@@ -76,9 +76,12 @@ services:
       CONFLUENT_METRICS_ENABLE: 'true'
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
       KAFKA_CREATE_TOPICS:
-        "start-process:1:1,
+        "connect-config-storage:1:1,
+         connect-offset-storage:1:1,
+         connect-status-storage:1:1,
+         start-process:1:1,
          update-proposal-process:1:1,
-         user-tasks-process:1:1
+         user-tasks-process:1:1,
          fraud-process:1:1,
          credit-process:1:1,
          steps-process:1:1,
@@ -100,7 +103,7 @@ services:
       KSQL_KSQL_CONNECT_URL: http://connect:8083
       KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
 
-  #docker-compose -f docker-compose-ktable.yml  exec ksqldb-cli ksql  http://ksqldb-server:8088
+  #docker-compose -f docker-compose-redis.yml  exec ksqldb-cli ksql  http://ksqldb-server:8088
   ksqldb-cli:
     image: confluentinc/ksqldb-cli:0.6.0
     container_name: ksqldb-cli
@@ -109,46 +112,61 @@ services:
     entrypoint: /bin/sh
     tty: true
 
-  connect:
-    image: confluentinc/cp-kafka-connect:5.4.0
-    hostname: connect
-    ports:
-      - "8083:8083"
-    environment:
-      CONNECT_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:29092
-      CONNECT_GROUP_ID: "connect"
-      CONNECT_CONFIG_STORAGE_TOPIC: "connect-config"
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_OFFSET_STORAGE_TOPIC: "connect-offsets"
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_STATUS_STORAGE_TOPIC: "connect-status"
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
-      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
-      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_REST_ADVERTISED_HOST_NAME: "localhost"
-      CONNECT_PLUGIN_PATH: "/usr/share/java"
-    volumes:
-      - ./scripts:/scripts\
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:5.3.1
+    hostname: control-center
+    container_name: my-control-center
     depends_on:
       - zookeeper
       - kafka
-      
-  #docker-compose -f docker-compose-ktable.yml exec redis redis-cli
-  redis:
-    image: 'docker.io/bitnami/redis:6.0-debian-10'
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
     ports:
-      - '6379:6379'
-    volumes:
-      - 'redis_data:/bitnami/redis/data'
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka:29092'
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      CONTROL_CENTER_CONNECT_CLUSTER: 'connect:8083'
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
 
-volumes:
-  redis_data:
-    driver: local
+  connect:
+    build: /Users/zupper/Documents/Projetos/camunda-kafka/
+    container_name: my-connect
+    hostname: connect
+    ports:
+      - "8083:8083"
+    depends_on:
+      - zookeeper
+      - kafka
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      CONNECT_GROUP_ID: "connect-group"
+      CONNECT_CONFIG_STORAGE_TOPIC: "connect-config-storage"
+      CONNECT_OFFSET_STORAGE_TOPIC: "connect-offset-storage"
+      CONNECT_STATUS_STORAGE_TOPIC: "connect-status-storage"
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_PLUGIN_PATH: "/usr/share/confluent-hub-components"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "connect"
+      CONNECT_REST_HOST_NAME: "connect"
+      CONNECT_REST_PORT: "8083"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_LOG4J_ROOT_LOGLEVEL: "INFO"
+      CLASSPATH: /usr/share/java/monitoring-interceptors/monitoring-interceptors-5.1.1.jar
+      CONNECT_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
+      CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
 
+  #docker-compose -f docker-compose-redis.yml exec redis redis-cli
+  redis:
+    image: redis
+    container_name: my-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
 

@@ -11,6 +11,8 @@ This module uses automatic BPMN deployment
 - Spring Boot
 - Kafka
 - Camunda
+- Kafka Connector
+- Redis
 
 ## Instalação
 
@@ -48,7 +50,7 @@ descrição):
 ### 1. Iniciar o docker compose
 
 ```
-$ docker-compose -f docker-compose-local.yml up
+$ docker-compose -f docker-compose-redis.yml up
 ```
 
 ### 2. Build no projeto
@@ -56,3 +58,15 @@ $ docker-compose -f docker-compose-local.yml up
 ```
 $ mvn clean install
 ```
+
+
+### 3. Configurar Redis
+curl -s -X POST -H 'Content-Type: application/json' --data @redis-sink-config.json http://localhost:8083/connectors
+
+
+### 4. Verificar banco Redis
+#docker-compose -f docker-compose-redis.yml exec redis redis-cli
+
+### 5. Ao finalizar rodar
+docker-compose -f docker-compose-redis.yml down --remove-orphans
+
